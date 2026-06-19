@@ -1,1 +1,3 @@
 data/
+.vscode/
+utils/__pycache__/
