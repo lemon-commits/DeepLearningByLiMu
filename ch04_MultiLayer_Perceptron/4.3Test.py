@@ -4,7 +4,7 @@ import torch
 from d2l import torch as d2l
 import sys, os 
 sys.path.append(r"D:\Book\202603-202606\DeepLearning\code")
-from utils.ch03_Animator import Animator
+from utils.ch03 import Animator
 num_inputs = 784
 num_hiddens = 256
 num_outputs = 10
