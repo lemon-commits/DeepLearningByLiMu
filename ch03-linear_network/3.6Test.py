@@ -5,7 +5,7 @@ import sys, os
 
 # 根据原代码设置绝对路径并引入 Animator
 sys.path.append(r"D:\Book\202603-202606\DeepLearning\code")  # 绝对路径设置到父目录就好了
-from utils.ch03_Animator import Animator
+from utils.ch03 import Animator
 
 # ==========================================
 # 1. 初始化及加载数据
