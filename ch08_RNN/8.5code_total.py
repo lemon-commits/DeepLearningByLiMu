@@ -64,7 +64,7 @@ def get_params(vocab_size, num_hiddens, device):
     # 附加梯度计算
     params = [W_xh, W_hh, b_h, W_hq, b_q]
     for param in params:
-        param.requires_grad_(True)
+        param.requires_grad_(True)  # 需要更新参数
     return params
 
 def init_rnn_state(batch_size, num_hiddens, device):
@@ -82,7 +82,7 @@ def rnn(inputs, state, params):
     # X 遍历 inputs，相当于模型一步步按时间顺序读取当前字符
     for X in inputs:
         # 核心公式：结合当前输入 X 和上一步的记忆 H
-        H = torch.tanh(torch.mm(X, W_xh) + torch.mm(H, W_hh) + b_h)
+        H = torch.tanh(torch.mm(X, W_xh) + torch.mm(H, W_hh) + b_h)  # 完成了每个时间步的隐藏状态更新
         # 根据当前记忆 H 计算输出
         Y = torch.mm(H, W_hq) + b_q
         outputs.append(Y)
@@ -98,7 +98,7 @@ class RNNModelScratch:
         self.init_state = init_state
         self.forward_fn = forward_fn
 
-    def __call__(self, X, state):
+    def __call__(self, X, state):  # 魔术方法，无需显示写方法名即可调用：net(X, state)
         # 将传入的整数索引 X 转换为独热编码（One-hot）向量
         # 注意这里 X.T 转置了，确保时间步维度在最前面
         X = F.one_hot(X.T, self.vocab_size).type(torch.float32)
@@ -108,8 +108,8 @@ class RNNModelScratch:
         return self.init_state(batch_size, self.num_hiddens, device)
     
     # 动态获取隐藏层大小，方便外部调用
-    @property
-    def num_hiddens(self):
+    @property  # 
+    def num_hiddens(self):  # 只读属性，可以直接调用：net.num_hiddens
         return self.params[1].shape[0]
 
 # ==========================================
@@ -134,17 +134,17 @@ def predict_ch8(prefix, num_preds, net, vocab, device):
     state = net.begin_state(batch_size=1, device=device)
     outputs = [vocab[prefix[0]]]
     # 使用 lambda 动态获取最新预测的字符作为下一步的输入
-    get_input = lambda: torch.tensor([outputs[-1]], device=device).reshape((1, 1))
+    get_input = lambda: torch.tensor([outputs[-1]], device=device).reshape((1, 1))  # 获取最近的一个字符
     
     # 预热期：用已知的前缀更新记忆（但不预测）
     for y in prefix[1:]:
-        _, state = net(get_input(), state)
+        _, state = net(get_input(), state)  # 拿到最新的H，类会先把单个字符变成one-hot编码量，再输入到模型中去
         outputs.append(vocab[y])
         
     # 预测期：利用最新的记忆开始无中生有
     for _ in range(num_preds):
         y, state = net(get_input(), state)
-        outputs.append(int(y.argmax(dim=1).reshape(1)))
+        outputs.append(int(y.argmax(dim=1).reshape(1)))  # 这里是逐个字符去预测的 outputs中内存放的是token的索引
         
     return ''.join([vocab.idx_to_token[i] for i in outputs])
 
@@ -163,8 +163,8 @@ def train_epoch_ch8(net, train_iter, loss, updater, device, use_random_iter):
             state = net.begin_state(batch_size=X.shape[0], device=device)
         else:
             # 截断反向传播，防止 OOM
-            if isinstance(net, nn.Module) and not isinstance(state, tuple):
-                state.detach_()
+            if isinstance(net, nn.Module) and not isinstance(state, tuple):  # 不是第一次初始化的隐藏状态，需要截断反向传播
+                state.detach_()  # 带_表示原地修改，每一个batch对应的num_steps,只在当前batch更新梯度并进行优化
             else:
                 for s in state:
                     s.detach_()
